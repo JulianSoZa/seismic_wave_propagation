@@ -8,17 +8,17 @@ def helmholtz_dirchlet_solution(nx, ny, x_dis, y_dis, delx, dely, puntos, nk, fr
     row = []
     col = []
 
-    b = np.zeros(nk)
+    b = np.zeros(nk, dtype=complex)
 
     omega = 2*np.pi*freq
 
-    source = lambda x, y, sigma: source_amplitude*np.exp(-((x)**2 + (y)**2) / (2 * sigma**2))
-    sigma_x = lambda x, ax: 2*np.pi*alpha*1e2*freq*((abs(x_dis[x])-abs(x_dis[nbl]))*ax/lnbl)**2
-    sigma_y = lambda y, ay: 2*np.pi*alpha*1e2*freq*((abs(y_dis[y])-abs(y_dis[nbl]))*ay/lnbl)**2
+    source = lambda x, y, sigma: source_amplitude*np.exp(-((x)**2 + (y)**2) / (2 * sigma**2))*np.exp(1j*np.pi/8)
+    sigma_x = lambda x, ax: 2*np.pi*alpha*1.4*freq*((abs(x_dis[x])-abs(x_dis[nbl]))*ax/lnbl)**2
+    sigma_y = lambda y, ay: 2*np.pi*alpha*1.4*freq*((abs(y_dis[y])-abs(y_dis[nbl]))*ay/lnbl)**2
 
-    tA = lambda x, y, ax, ay: np.real((1-1j*sigma_y(y, ay)/omega)/(1-1j*sigma_x(x, ax)/omega))
-    tB = lambda x, y, ax, ay: np.real((1-1j*sigma_x(x, ax)/omega)/(1-1j*sigma_y(y, ay)/omega))
-    tC = lambda x, y, ax, ay: np.real(((1-1j*sigma_y(y, ay)/omega))*((1-1j*sigma_x(x, ax)/omega))*(omega/velocity)**2)
+    tA = lambda x, y, ax, ay: ((1-1j*sigma_y(y, ay)/omega)/(1-1j*sigma_x(x, ax)/omega))
+    tB = lambda x, y, ax, ay: ((1-1j*sigma_x(x, ax)/omega)/(1-1j*sigma_y(y, ay)/omega))
+    tC = lambda x, y, ax, ay: (((1-1j*sigma_y(y, ay)/omega))*((1-1j*sigma_x(x, ax)/omega))*(omega/velocity)**2)
 
     num = lambda x,y: nx*y+x
 
@@ -123,7 +123,7 @@ def helmholtz_dirchlet_solution(nx, ny, x_dis, y_dis, delx, dely, puntos, nk, fr
                 cD = 1/dely**2
                 cE = 1/dely**2
 
-            b[k] = source(x_dis[i], y_dis[j], sigma=0.01)
+            b[k] = source(x_dis[i], y_dis[j], sigma=0.05)
 
             data.append(cA)
             row.append(k)
@@ -155,9 +155,9 @@ def helmholtz_dirchlet_solution(nx, ny, x_dis, y_dis, delx, dely, puntos, nk, fr
     
     U = spsolve(A,b)
     
-    u = np.zeros((nk,3))
-    U_array_2D = np.zeros((nx, ny))
-    b_array_2D = np.zeros((nx, ny))
+    u = np.zeros((nk,3), dtype=complex)
+    U_array_2D = np.zeros((nx, ny), dtype=complex)
+    b_array_2D = np.zeros((nx, ny), dtype=complex)
 
     for k in range(nk):
         i = k%(nx)
@@ -175,7 +175,7 @@ if __name__ == "__main__":
     nx = 501
     ny = 501
     nbl = 150
-    freq = 0.01
+    freq = 10
     velocity = 1.5
 
     x_dis = np.linspace(-1.25, 1.25, nx)
@@ -191,19 +191,27 @@ if __name__ == "__main__":
 
     U_c, u_space_c, U_array_2D, b_array_2D = helmholtz_dirchlet_solution(nx, ny, x_dis, y_dis, delx, dely, puntosIndices, nk, freq, nbl, velocity, lnbl, source_amplitude, alpha)
 
-    fig, (ax0, ax1) = plt.subplots(1,2, figsize=(12, 5))
-    im0 = ax0.imshow(b_array_2D.T, extent=(-1.25, 1.25, -1.25, 1.25), origin='lower')
-    plt.colorbar(im0, ax=ax0, shrink=0.7)
+    fig, (ax0, ax1, ax2) = plt.subplots(1, 3, figsize=(18, 6))
+    vmax = np.max(np.abs(b_array_2D))
+    im0 = ax0.imshow(np.real(b_array_2D).T, extent=(-1.25, 1.25, -1.25, 1.25), origin='lower', cmap='PRGn', vmin=-vmax, vmax=vmax)
+    plt.colorbar(im0, ax=ax0, shrink=0.5)
     ax0.set_title('Source')
     ax0.set_xlabel('x')
     ax0.set_ylabel('y')
 
-    im1 = ax1.imshow(U_array_2D.T, extent=(-1.25, 1.25, -1.25, 1.25), origin='lower')
-    plt.colorbar(im1, ax=ax1, shrink=0.7)
+    vmax = np.max(np.abs(np.real(U_array_2D)))
+    im1 = ax1.imshow(np.real(U_array_2D).T, extent=(-1.25, 1.25, -1.25, 1.25), origin='lower', cmap='seismic', vmin=-vmax, vmax=vmax)
+    plt.colorbar(im1, ax=ax1, shrink=0.5)
     ax1.set_title('Field')
     ax1.set_xlabel('x')
     ax1.set_ylabel('y')
 
-    plt.tight_layout()
+    im2 = ax2.imshow(np.angle(U_array_2D).T, extent=(-1.25, 1.25, -1.25, 1.25), origin='lower', cmap='twilight', vmin=-np.pi, vmax=np.pi)
+    plt.colorbar(im2, ax=ax2, shrink=0.5)
+    ax2.set_title('Phase')
+    ax2.set_xlabel('x')
+    ax2.set_ylabel('y')
+
+    fig.tight_layout()
 
     plt.show()
