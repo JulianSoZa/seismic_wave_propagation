@@ -3,7 +3,7 @@ from scipy.sparse import csr_matrix
 from scipy.sparse.linalg import spsolve
 import matplotlib.pyplot as plt
 
-def helmholtz_dirchlet_solution(nx, ny, x_dis, y_dis, delx, dely, puntos, nk, freq, nbl, velocity, lnbl, source_amplitude, alpha):
+def helmholtz_dirchlet_solution(nx, ny, x_dis, y_dis, delx, dely, puntos, nk, freq, nbl, velocity, lnbl, source_amplitude, alpha, velocity_array):
     data = []
     row = []
     col = []
@@ -12,13 +12,13 @@ def helmholtz_dirchlet_solution(nx, ny, x_dis, y_dis, delx, dely, puntos, nk, fr
 
     omega = 2*np.pi*freq
 
-    source = lambda x, y, sigma: source_amplitude*np.exp(-((x)**2 + (y)**2) / (2 * sigma**2))*np.exp(1j*np.pi/8)
+    source = lambda x, y, sigma: source_amplitude*np.exp(-((x)**2 + (y-0.4)**2) / (2 * sigma**2))*np.exp(1j*np.pi/8)
     sigma_x = lambda x, ax: 2*np.pi*alpha*1.4*freq*((abs(x_dis[x])-abs(x_dis[nbl]))*ax/lnbl)**2
     sigma_y = lambda y, ay: 2*np.pi*alpha*1.4*freq*((abs(y_dis[y])-abs(y_dis[nbl]))*ay/lnbl)**2
 
     tA = lambda x, y, ax, ay: ((1-1j*sigma_y(y, ay)/omega)/(1-1j*sigma_x(x, ax)/omega))
     tB = lambda x, y, ax, ay: ((1-1j*sigma_x(x, ax)/omega)/(1-1j*sigma_y(y, ay)/omega))
-    tC = lambda x, y, ax, ay: (((1-1j*sigma_y(y, ay)/omega))*((1-1j*sigma_x(x, ax)/omega))*(omega/velocity)**2)
+    tC = lambda x, y, ax, ay: (((1-1j*sigma_y(y, ay)/omega))*((1-1j*sigma_x(x, ax)/omega))*(omega/velocity_array[x, y])**2)
 
     num = lambda x,y: nx*y+x
 
@@ -77,47 +77,47 @@ def helmholtz_dirchlet_solution(nx, ny, x_dis, y_dis, delx, dely, puntos, nk, fr
 
             elif (i<nbl):
 
-                cA = (-1/delx**2 * tA(i, 0, 1, 0) - 1/delx**2 * tA(i-1, 0, 1, 0)
-                      - 1/dely**2 * tB(i, 0, 1, 0) - 1/dely**2 * tB(i, 0, 1, 0)
-                      + tC(i, 0, 1, 0))
+                cA = (-1/delx**2 * tA(i, j, 1, 0) - 1/delx**2 * tA(i-1, j, 1, 0)
+                      - 1/dely**2 * tB(i, j+1, 1, 0) - 1/dely**2 * tB(i, j, 1, 0)
+                      + tC(i, j, 1, 0))
 
-                cB = 1/delx**2 * tA(i, 0, 1, 0)
-                cC = 1/delx**2 * tA(i-1, 0, 1, 0)
-                cD = 1/dely**2 * tB(i, 0, 1, 0)
-                cE = 1/dely**2 * tB(i, 0, 1, 0)
+                cB = 1/delx**2 * tA(i, j, 1, 0)
+                cC = 1/delx**2 * tA(i-1, j, 1, 0)
+                cD = 1/dely**2 * tB(i, j+1, 1, 0)
+                cE = 1/dely**2 * tB(i, j, 1, 0)
 
             elif (i>nx-nbl-1):
-                cA = (-1/delx**2 * tA(i+1, 0, 1, 0) - 1/delx**2 * tA(i, 0, 1, 0)
-                      - 1/dely**2 * tB(i, 0, 1, 0) - 1/dely**2 * tB(i, 0, 1, 0)
-                      + tC(i, 0, 1, 0))
+                cA = (-1/delx**2 * tA(i+1, j, 1, 0) - 1/delx**2 * tA(i, j, 1, 0)
+                      - 1/dely**2 * tB(i, j+1, 1, 0) - 1/dely**2 * tB(i, j, 1, 0)
+                      + tC(i, j, 1, 0))
 
-                cB = 1/delx**2 * tA(i+1, 0, 1, 0)
-                cC = 1/delx**2 * tA(i, 0, 1, 0)
-                cD = 1/dely**2 * tB(i, 0, 1, 0)
-                cE = 1/dely**2 * tB(i, 0, 1, 0)
+                cB = 1/delx**2 * tA(i+1, j, 1, 0)
+                cC = 1/delx**2 * tA(i, j, 1, 0)
+                cD = 1/dely**2 * tB(i, j+1, 1, 0)
+                cE = 1/dely**2 * tB(i, j, 1, 0)
 
             elif (j<nbl):
-                cA = (-1/delx**2 * tA(0, j, 0, 1) - 1/delx**2 * tA(0, j, 0, 1)
-                      - 1/dely**2 * tB(0, j, 0, 1) - 1/dely**2 * tB(0, j-1, 0, 1)
-                      + tC(0, j, 0, 1))
+                cA = (-1/delx**2 * tA(i+1, j, 0, 1) - 1/delx**2 * tA(i, j, 0, 1)
+                      - 1/dely**2 * tB(i, j, 0, 1) - 1/dely**2 * tB(i, j-1, 0, 1)
+                      + tC(i, j, 0, 1))
 
-                cB = 1/delx**2 * tA(0, j, 0, 1)
-                cC = 1/delx**2 * tA(0, j, 0, 1)
-                cD = 1/dely**2 * tB(0, j, 0, 1)
-                cE = 1/dely**2 * tB(0, j-1, 0, 1)
+                cB = 1/delx**2 * tA(i+1, j, 0, 1)
+                cC = 1/delx**2 * tA(i, j, 0, 1)
+                cD = 1/dely**2 * tB(i, j, 0, 1)
+                cE = 1/dely**2 * tB(i, j-1, 0, 1)
 
             elif (j>ny-nbl-1):
-                cA = (-1/delx**2 * tA(0, j, 0, 1) - 1/delx**2 * tA(0, j, 0, 1)
-                      - 1/dely**2 * tB(0, j+1, 0, 1) - 1/dely**2 * tB(0, j, 0, 1)
-                      + tC(0, j, 0, 1))
+                cA = (-1/delx**2 * tA(i+1, j, 0, 1) - 1/delx**2 * tA(i, j, 0, 1)
+                      - 1/dely**2 * tB(i, j+1, 0, 1) - 1/dely**2 * tB(i, j, 0, 1)
+                      + tC(i, j, 0, 1))
 
-                cB = 1/delx**2 * tA(0, j, 0, 1)
-                cC = 1/delx**2 * tA(0, j, 0, 1)
-                cD = 1/dely**2 * tB(0, j+1, 0, 1)
-                cE = 1/dely**2 * tB(0, j, 0, 1)
+                cB = 1/delx**2 * tA(i+1, j, 0, 1)
+                cC = 1/delx**2 * tA(i, j, 0, 1)
+                cD = 1/dely**2 * tB(i, j+1, 0, 1)
+                cE = 1/dely**2 * tB(i, j, 0, 1)
 
             else:
-                cA = (-2/delx**2 - 2/dely**2 + (omega/velocity)**2)
+                cA = (-2/delx**2 - 2/dely**2 + (omega/velocity_array[i, j])**2)
                 cB = 1/delx**2
                 cC = 1/delx**2
                 cD = 1/dely**2
@@ -177,6 +177,8 @@ if __name__ == "__main__":
     nbl = 150
     freq = 10
     velocity = 1.5
+    velocity_array = np.ones((nx, ny))*velocity
+    velocity_array[:, :(ny-1)//2] = velocity*2
 
     x_dis = np.linspace(-1.25, 1.25, nx)
     y_dis = np.linspace(-1.25, 1.25, ny)
@@ -189,7 +191,8 @@ if __name__ == "__main__":
     source_amplitude = 1.0
     alpha = 1.0
 
-    U_c, u_space_c, U_array_2D, b_array_2D = helmholtz_dirchlet_solution(nx, ny, x_dis, y_dis, delx, dely, puntosIndices, nk, freq, nbl, velocity, lnbl, source_amplitude, alpha)
+    U_c, u_space_c, U_array_2D, b_array_2D = helmholtz_dirchlet_solution(nx, ny, x_dis, y_dis, delx, dely, puntosIndices, nk, freq, 
+                                                                         nbl, velocity, lnbl, source_amplitude, alpha, velocity_array)
 
     fig, (ax0, ax1, ax2) = plt.subplots(1, 3, figsize=(18, 6))
     vmax = np.max(np.abs(b_array_2D))
@@ -213,5 +216,12 @@ if __name__ == "__main__":
     ax2.set_ylabel('y')
 
     fig.tight_layout()
+    
+    fig2 = plt.figure()
+    plt.imshow(velocity_array.T, extent=(-1.25, 1.25, -1.25, 1.25), origin='lower', cmap='viridis')
+    plt.colorbar(shrink=0.5)
+    plt.title('Velocity')
+    plt.xlabel('x')
+    plt.ylabel('y')
 
     plt.show()
