@@ -3,39 +3,36 @@ from scipy.sparse import csr_matrix
 from scipy.sparse.linalg import spsolve
 import matplotlib.pyplot as plt
 
-def helmholtz_dirchlet_solution(nx, ny, x_dis, y_dis, delx, dely, puntos, nk, a1, a2, wavenumber):
+def helmholtz_dirchlet_solution(nx, ny, x_array, y_array, dx, dy, points, nk, frequency, velocity, source):
     data = []
     row = []
     col = []
 
-    b = np.zeros(nk)
-
-    source = lambda x, y, ax, ay, wavenumber: (-(ax*np.pi)**2 -(ay*np.pi)**2 + wavenumber**2)*np.sin(ax*np.pi*x)*np.sin(ay*np.pi*y)
-    #source = lambda x, y, sigma, a: a*np.exp(-((x)**2 + (y)**2) / (2 * sigma**2))
+    b = np.zeros(nk, dtype=complex)
+    
+    omega = 2*np.pi*frequency
+    wavenumber = omega/velocity
 
     num = lambda x,y: nx*y+x
     
-    cA = -2/delx**2 - 2/dely**2 + wavenumber**2
-    cB = 1/delx**2
-    cC = 1/delx**2
-    cD = 1/dely**2
-    cE = 1/dely**2
+    cA = -2/dx**2 - 2/dy**2 + wavenumber**2
+    cB = 1/dx**2
+    cC = 1/dx**2
+    cD = 1/dy**2
+    cE = 1/dy**2
 
     for k in range(nk):
         i = k%(nx)
         j = int(k/(nx))
         
-        if k in puntos:
+        if k in points:
             if (i == 0 or i == nx-1 or j == 0 or j == ny-1):
-                b[k] = 0
-
                 data.append(1)
                 row.append(k)
                 col.append(k)
 
             else:
-                b[k] = source(x_dis[i], y_dis[j], a1, a2, wavenumber)
-                #b[k] = source(x_dis[i], y_dis[j], 0.01, 1)
+                b[k] = source(x_array[i], y_array[j])
 
                 data.append(cA)
                 row.append(k)
@@ -65,52 +62,58 @@ def helmholtz_dirchlet_solution(nx, ny, x_dis, y_dis, delx, dely, puntos, nk, a1
     A = csr_matrix((data, (row, col)))
     
     U = spsolve(A,b)
-    
-    u = np.zeros((nk,3))
-    U_array_2D = np.zeros((nx, ny))
-    b_array_2D = np.zeros((nx, ny))
+
+    U_array_2D = np.zeros((nx, ny), dtype=complex)
+    b_array_2D = np.zeros((nx, ny), dtype=complex)
 
     for k in range(nk):
         i = k%(nx)
         j = int(k/(nx))
-        u[k] = np.array([x_dis[i], y_dis[j], U[k]])
+        
         U_array_2D[i, j] = U[k]
         b_array_2D[i, j] = b[k]
 
     print('Se soluciona el campo en cartesianas')
 
-    return U, u, U_array_2D, b_array_2D
+    return U_array_2D, b_array_2D
 
 if __name__ == "__main__":
 
+    from sources import SinSinSource
+    
     nx = 400
     ny = 400
-    a1 = 2
-    a2 = 2
-    wavenumber = 1
+    domain_extension = (-1, 1, -1, 1)
+    
+    frequency = 1
+    velocity = 2*np.pi
+    wavenumber = 2*np.pi*frequency/velocity
 
-    x_dis = np.linspace(-1, 1, nx)
-    y_dis = np.linspace(-1, 1, ny)
-    delx = x_dis[1] - x_dis[0]
-    dely = y_dis[1] - y_dis[0]
+    x_array = np.linspace(domain_extension[0], domain_extension[1], nx)
+    y_array = np.linspace(domain_extension[2], domain_extension[3], ny)
+    
+    dx = x_array[1] - x_array[0]
+    dy = y_array[1] - y_array[0]
     nk = nx * ny
-    puntosIndices = np.arange(nk)
+    points = np.arange(nk)
 
-    U_c, u_space_c, U_array_2D, b_array_2D = helmholtz_dirchlet_solution(nx, ny, x_dis, y_dis, delx, dely, puntosIndices, nk, a1, a2, wavenumber)
+    source = SinSinSource(ax=2, ay=2, wavenumber=wavenumber)
+
+    u, b = helmholtz_dirchlet_solution(nx, ny, x_array, y_array, dx, dy, points, nk, frequency, velocity, source)
 
     fig, (ax0, ax1) = plt.subplots(1,2, figsize=(12, 5))
-    im0 = ax0.imshow(b_array_2D, extent=(-1, 1, -1, 1), origin='lower')
-    plt.colorbar(im0, ax=ax0, shrink=0.7)
+    im0 = ax0.imshow(np.real(b), extent=domain_extension, origin='lower')
+    fig.colorbar(im0, ax=ax0, shrink=0.7)
     ax0.set_title('Source')
     ax0.set_xlabel('x')
     ax0.set_ylabel('y')
 
-    im1 = ax1.imshow(U_array_2D, extent=(-1, 1, -1, 1), origin='lower')
-    plt.colorbar(im1, ax=ax1, shrink=0.7)
+    im1 = ax1.imshow(np.real(u), extent=domain_extension, origin='lower')
+    fig.colorbar(im1, ax=ax1, shrink=0.7)
     ax1.set_title('Field')
     ax1.set_xlabel('x')
     ax1.set_ylabel('y')
 
-    plt.tight_layout()
+    fig.tight_layout()
 
     plt.show()
