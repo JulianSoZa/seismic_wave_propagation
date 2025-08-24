@@ -2,17 +2,6 @@ import numpy as np
 from scipy.sparse import csr_matrix
 from scipy.sparse.linalg import spsolve
 
-class GaussianSource:
-    def __init__(self, amplitude, x_pos, y_pos, sigma, phase):
-        self.amplitude = amplitude
-        self.x_pos = x_pos
-        self.y_pos = y_pos
-        self.sigma = sigma
-        self.phase = phase
-
-    def __call__(self, x, y):
-        return self.amplitude * np.exp(-((x - self.x_pos)**2 + (y - self.y_pos)**2) / (2 * self.sigma**2)) * np.exp(1j * self.phase)
-
 def helmholtz_pml_solution(nx, ny, x_array, y_array, dx, dy, points, nk, frequency, nbl, velocity, lpml, source, alpha):
     data = []
     row = []
@@ -113,6 +102,7 @@ def helmholtz_pml_solution(nx, ny, x_array, y_array, dx, dy, points, nk, frequen
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
     import matplotlib.patches as patches
+    import sources
 
     main_domain_shape = (201, 201)
     main_domain_extension = (-0.5, 0.5, -0.5, 0.5)
@@ -143,7 +133,7 @@ if __name__ == "__main__":
     
     alpha = 1.4
     
-    source = GaussianSource(amplitude=1, x_pos=0, y_pos=0.4, sigma=0.05, phase=np.pi/8)
+    source = sources.GaussianSource(amplitude=1, x_pos=0, y_pos=0.4, sigma=0.05, phase=np.pi/8)
 
     u, b = helmholtz_pml_solution(nx, ny, x_array, y_array, dx, dy, points_number, nk, frequency,
                                                                          nbl, velocity_array, lpml, source, alpha)
