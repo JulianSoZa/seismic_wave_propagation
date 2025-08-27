@@ -34,7 +34,7 @@ class RickerWaveletFD(GaussianSource):
         return spatial_distribution * frequency_distribution
     
     def frequency_spectrum(self, f):
-        return (2/np.sqrt(np.pi) * f**2/self.f0**3) * np.exp(-(f/self.f0)**2) * np.exp(1j*2*np.pi*f*self.t0)
+        return (2/np.sqrt(np.pi) * f**2/self.f0**3) * np.exp(-(f/self.f0)**2) * np.exp(-1j*2*np.pi*f*self.t0)
 
     def plot(self, axs, frequency_array):
         axs[0].plot(frequency_array, np.abs(self.frequency_spectrum(frequency_array))**2)
