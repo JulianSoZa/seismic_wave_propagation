@@ -36,13 +36,30 @@ class RickerWaveletFD(GaussianSource):
     def frequency_spectrum(self, f):
         return (2/np.sqrt(np.pi) * f**2/self.f0**3) * np.exp(-(f/self.f0)**2) * np.exp(-1j*2*np.pi*f*self.t0)
 
-    def plot(self, axs, frequency_array):
+    def plot(self, axs, frequency_array, nfreq=1000, dt=0.001):
         axs[0].plot(frequency_array, np.abs(self.frequency_spectrum(frequency_array))**2)
         axs[0].set_title('Ricker Wavelet Power Spectrum')
         axs[0].set_xlabel('Frequency (Hz)')
         axs[0].set_ylabel('Power')
+        axs[0].grid()
 
         axs[1].plot(frequency_array, np.angle(self.frequency_spectrum(frequency_array)))
         axs[1].set_title('Ricker Wavelet Phase Spectrum')
         axs[1].set_xlabel('Frequency (Hz)')
         axs[1].set_ylabel('Phase (radians)')
+        axs[1].grid()
+
+        axs[2].plot(frequency_array, np.real(self.frequency_spectrum(frequency_array)))
+        axs[2].set_title('Ricker Wavelet Real Spectrum')
+        axs[2].set_xlabel('Frequency (Hz)')
+        axs[2].set_ylabel('Real Part')
+        axs[2].grid()
+
+        frequency_spectrum = self.frequency_spectrum(np.fft.rfftfreq(nfreq, d=dt))
+        time_distribution = np.fft.irfft(frequency_spectrum)/dt
+        
+        axs[3].plot(np.arange(time_distribution.size)*dt, time_distribution)
+        axs[3].set_title('Ricker Wavelet Time Domain')
+        axs[3].set_xlabel('Time (s)')
+        axs[3].set_ylabel('Amplitude')
+        axs[3].grid()
