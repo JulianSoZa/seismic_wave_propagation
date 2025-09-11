@@ -63,3 +63,13 @@ class RickerWaveletFD(GaussianSource):
         axs[3].set_xlabel('Time (s)')
         axs[3].set_ylabel('Amplitude')
         axs[3].grid()
+
+class PlaneWaveSource:
+    def __init__(self, amplitude, phase, x_range, y_pos):
+        self.amplitude = amplitude
+        self.phase = phase
+        self.x_range = x_range
+        self.y_pos = y_pos
+
+    def __call__(self, x, y):
+        return self.amplitude * np.exp(1j * self.phase) if abs(x)<self.x_range and y == self.y_pos else 0
