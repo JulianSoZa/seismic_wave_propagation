@@ -85,3 +85,50 @@ def plot_main_solution(domain, frequency_array, this_nfrequency, u_arrays, b_arr
     ax2.set_ylabel('y')
 
     fig.tight_layout()
+
+def plot_source_term(domain, frequencies, this_nfrequency, source_injected, source_term, figsize=(14, 5)):
+    idx_main_domain = (slice(domain.nbl, -domain.nbl), slice(domain.nbl, -domain.nbl), slice(None))
+    fig, (ax0, ax1, ax2) = plt.subplots(1, 3, figsize=figsize)
+    fig.suptitle(f'Frequency: {frequencies[this_nfrequency]:.1f} Hz', fontsize=16)
+
+    vmax = np.max(np.abs(source_injected[..., this_nfrequency]))
+    im0 = ax0.imshow(np.real(source_injected[..., this_nfrequency])[idx_main_domain[:2]].T, extent=domain.main_extension, origin='lower', cmap=cmap_source, vmin=-vmax, vmax=vmax)
+    fig.colorbar(im0, ax=ax0, shrink=0.5)
+    ax0.set_title('Source (Real part)')
+    ax0.set_xlabel('x')
+    ax0.set_ylabel('y')
+
+    vmax = np.max(np.abs(source_term[..., this_nfrequency]))
+    im1 = ax1.imshow(np.real(source_term[..., this_nfrequency])[idx_main_domain[:2]].T, extent=domain.main_extension, origin='lower', cmap=cmap_source, vmin=-vmax, vmax=vmax)
+    fig.colorbar(im1, ax=ax1, shrink=0.5)
+    ax1.set_title('Source Calculated (Real part)')
+    ax1.set_xlabel('x')
+    ax1.set_ylabel('y')
+
+    error = (source_injected - source_term)
+    vmax = np.max(np.abs(error[..., this_nfrequency])[idx_main_domain[:2]])
+    im2 = ax2.imshow(np.real(error[..., this_nfrequency])[idx_main_domain[:2]].T, extent=domain.main_extension, cmap=cmap_source, origin='lower', vmin=-vmax, vmax=vmax)
+    fig.colorbar(im2, ax=ax2, shrink=0.5)
+    ax2.set_title('Source Error')
+    ax2.set_xlabel('x')
+    ax2.set_ylabel('y')
+
+    fig.tight_layout()
+
+def plot_source_comparison(domain, this_nfrequency, frequency_array, source_injected, source_term, source_analytical, pos_injection, figsize=(14, 5)):
+    idx_main_domain = (slice(domain.nbl, -domain.nbl), slice(domain.nbl, -domain.nbl), slice(None))
+    fig, (ax0, ax1) = plt.subplots(1, 2, figsize=figsize)
+    ax0.imshow(np.real(source_injected)[..., this_nfrequency][idx_main_domain[:2]].T, origin='lower')
+    ax0.set_title('Injected Source')
+    ax0.set_xlabel('x')
+    ax0.set_ylabel('y')
+
+    ax1.plot(frequency_array, np.real(source_injected)[idx_main_domain[:2]].T[:, pos_injection[0], pos_injection[1]], label='Injected')
+    ax1.plot(frequency_array, np.real(source_term)[idx_main_domain[:2]].T[:, pos_injection[0], pos_injection[1]], '--', label='Calculated')
+    ax1.plot(frequency_array, source_analytical, '.', label='Analytical')
+    ax1.set_xlabel('Frequency (Hz)')
+    ax1.set_ylabel('Amplitude')
+    ax1.set_title(f'Source Comparison at {pos_injection}')
+    ax1.grid()
+    ax1.legend()
+    fig.tight_layout()
