@@ -2,36 +2,38 @@ import numpy as np
 from scipy.sparse import csr_matrix
 from scipy.sparse.linalg import spsolve
 
-def helmholtz_pml_solution(nx, ny, x_array, y_array, dx, dy, points, nk, frequency, nbl, velocity, lpml, source, alpha):
+def helmholtz_pml_solution(domain, frequency, velocity, source, alpha):
     """
     Solve the Helmholtz equation with PML boundary conditions.
 
     Parameters
     ----------
-    nx: int
-        number of grid points in the x direction
-    ny: int
-        number of grid points in the y direction
-    x_array: array
-        array of x coordinates
-    y_array: array
-        array of y coordinates
-    dx: float
-        grid spacing in the x direction
-    dy: float
-        grid spacing in the y direction
-    points: array
-        global enumeration of the grid
-    nk: int
-        number of grid points
+    domain: object
+        with attributes:
+            nx: int
+                number of grid points in the x direction
+            ny: int
+                number of grid points in the y direction
+            x_array: array
+                array of x coordinates
+            y_array: array
+                array of y coordinates
+            dx: float
+                grid spacing in the x direction
+            dy: float
+                grid spacing in the y direction
+            points: array
+                global enumeration of the grid
+            nk: int
+                number of grid points
+            nbl: int
+                number of boundary layers
+            lpml: float
+                thickness of the PML layer
     frequency: float
         frequency of the wave
-    nbl: int
-        number of boundary layers
     velocity: array
         velocity model
-    lpml: float
-        thickness of the PML layer
     source: function
         source function
     alpha: float
@@ -44,6 +46,17 @@ def helmholtz_pml_solution(nx, ny, x_array, y_array, dx, dy, points, nk, frequen
     b: array
         right side array
     """
+    nx = domain.nx
+    ny = domain.ny
+    x_array = domain.x_array
+    y_array = domain.y_array
+    dx = domain.dx
+    dy = domain.dy
+    points = domain.points
+    nk = domain.nk
+    nbl = domain.nbl
+    lpml = domain.lpml
+
     data = []
     row = []
     col = []
