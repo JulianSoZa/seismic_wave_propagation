@@ -9,13 +9,14 @@ def plot_velocity(domain, velocity, figsize=(8, 6)):
     """
     Plots the velocity model
 
-    Parameters:
-    domain: object
-        with attributes:
-            extension: touple of 4 floats
-                (x_min, x_max, y_min, y_max) defining the plot extent
-    velocity: array
-        A 2D numpy array representing the velocity model.
+    Parameters
+    ----------
+        domain: object
+            with attributes:\n
+                extension: touple of 4 floats
+                    (x_min, x_max, y_min, y_max) defining the plot extent
+        velocity: array
+            A 2D numpy array representing the velocity model.
     """
     plt.figure(figsize=figsize)
     plt.imshow(velocity.T, extent=domain.extension, origin='lower', cmap='viridis')
@@ -132,3 +133,25 @@ def plot_source_comparison(domain, this_nfrequency, frequency_array, source_inje
     ax1.grid()
     ax1.legend()
     fig.tight_layout()
+
+def plot_field(domain, u, vmax=None, figsize=(8, 6), title='Field'):
+    """
+    Plots the field.
+
+    Parameters
+    ----------
+        domain: object
+            with attributes:\n
+                extension: touple of 4 floats
+                    (x_min, x_max, y_min, y_max) defining the plot extent
+        u: array
+            A 2D numpy array representing the field solution.
+    """
+    plt.figure(figsize=figsize)
+    vmax = np.max(np.abs(u)) if vmax is None else vmax
+    plt.imshow(u.T, extent=domain.extension, origin='lower', cmap='seismic', vmin=-vmax, vmax=vmax)
+    plt.colorbar()
+    plt.title(title)
+    plt.xlabel('x')
+    plt.ylabel('y')
+    
