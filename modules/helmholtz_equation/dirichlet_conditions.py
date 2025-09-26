@@ -1,8 +1,10 @@
+#%% Libreries
 import numpy as np
 from scipy.sparse import csr_matrix
 from scipy.sparse.linalg import spsolve
 import matplotlib.pyplot as plt
 
+#%% Solver function
 def helmholtz_dirchlet_solution(nx, ny, x_array, y_array, dx, dy, points, nk, frequency, velocity, source):
     data = []
     row = []
@@ -54,7 +56,7 @@ def helmholtz_dirchlet_solution(nx, ny, x_array, y_array, dx, dy, points, nk, fr
                 row.append(k)
                 col.append(int(num(i,j-1)))
         else:
-            print('no')
+            # print(f'The {k} point is not part of the domain') for debugging
             data.append(1)
             row.append(k)
             col.append(k)
@@ -73,16 +75,14 @@ def helmholtz_dirchlet_solution(nx, ny, x_array, y_array, dx, dy, points, nk, fr
         U_array_2D[i, j] = U[k]
         b_array_2D[i, j] = b[k]
 
-    print('Se soluciona el campo en cartesianas')
+    print('Solution computed')
 
     return U_array_2D, b_array_2D
 
+#%% Example of use
 if __name__ == "__main__":
-
-    from sources import SinSinSource
-    
-    nx = 400
-    ny = 400
+    # Parameters
+    nx, ny = 500, 500
     domain_extension = (-1, 1, -1, 1)
     
     frequency = 1
@@ -97,23 +97,56 @@ if __name__ == "__main__":
     nk = nx * ny
     points = np.arange(nk)
 
-    source = SinSinSource(ax=2, ay=2, wavenumber=wavenumber)
+    ax, ay = 2, 2
+    source = lambda x, y: (-(ax * np.pi)**2 - (ay * np.pi)**2 + wavenumber**2) * np.sin(ax * np.pi * x) * np.sin(ay * np.pi * y)
 
     u, b = helmholtz_dirchlet_solution(nx, ny, x_array, y_array, dx, dy, points, nk, frequency, velocity, source)
 
+    #%% Plotting
     fig, (ax0, ax1) = plt.subplots(1,2, figsize=(12, 5))
-    im0 = ax0.imshow(np.real(b), extent=domain_extension, origin='lower')
+    vmax = np.max(np.abs(np.real(b)))
+    im0 = ax0.imshow(np.real(b), extent=domain_extension, origin='lower', vmin=-vmax, vmax=vmax)
     fig.colorbar(im0, ax=ax0, shrink=0.7)
-    ax0.set_title('Source')
+
+    ax0.set_title('Source (Real part)')
     ax0.set_xlabel('x')
     ax0.set_ylabel('y')
 
-    im1 = ax1.imshow(np.real(u), extent=domain_extension, origin='lower')
+    vmax = np.max(np.abs(np.real(u)))
+    im1 = ax1.imshow(np.real(u), extent=domain_extension, origin='lower', vmin=-vmax, vmax=vmax)
     fig.colorbar(im1, ax=ax1, shrink=0.7)
-    ax1.set_title('Field')
+    ax1.set_title('Field (Real part)')
     ax1.set_xlabel('x')
     ax1.set_ylabel('y')
 
     fig.tight_layout()
 
     plt.show()
+
+    #%% Analysis
+    X, Y = np.meshgrid(x_array, y_array)
+    u_analytical = np.sin(ax * np.pi * X) * np.sin(ay * np.pi * Y)
+
+    fig, (ax0, ax1) = plt.subplots(1,2, figsize=(12, 5))
+    vmax = np.max(np.abs(np.real(u_analytical)))
+    im0 = ax0.imshow(np.real(u_analytical), extent=domain_extension, origin='lower', vmin=-vmax, vmax=vmax)
+    fig.colorbar(im0, ax=ax0, shrink=0.95)
+    ax0.set_title('Analytical Solution (Real part)')
+    ax0.set_xlabel('x')
+    ax0.set_ylabel('y')
+    fig.tight_layout()
+
+    error_norm = np.linalg.norm(u - u_analytical)/np.linalg.norm(u_analytical)
+    print(f'Relative error: {error_norm:.2e}')
+
+    diff = np.abs(u - u_analytical)
+    
+    vmax = np.max(diff)
+    im1 = ax1.imshow(diff, extent=domain_extension, origin='lower', cmap='gray')
+    fig.colorbar(im1, ax=ax1, shrink=0.95)
+    ax1.set_title('Difference |Numerical - Analytical|')
+    ax1.set_xlabel('x')
+    ax1.set_ylabel('y')
+    fig.tight_layout()
+    plt.show()
+# %%
