@@ -171,3 +171,30 @@ def plot_frequency_modes(model, freq_modes, freq_array, freq_plot, vmaxInt=None,
         plt.ylabel('Depth (km)')
 
     plt.tight_layout()
+
+def plot_source_comparison(model, this_nfrequency, freq_array, source_injected, source_injected_freq_array, source_term, source_analytical, pos_injection, figsize=(14, 5)):
+    idx_domain_ROI = (slice(None), slice(model.nbl, -model.nbl), slice(model.nbl, -model.nbl))
+
+    domain_size = 1.e-3 * np.array(model.domain_size)
+    extent = [model.origin[0], model.origin[0] + domain_size[0],
+                model.origin[1] + domain_size[1], model.origin[1]]
+    
+    vmax = np.max(np.abs(np.real(source_term[idx_domain_ROI])))
+    
+    fig, (ax0, ax1) = plt.subplots(1, 2, figsize=figsize)
+    im0 = ax0.imshow(np.real(source_term[this_nfrequency])[idx_domain_ROI[1:]].T, extent=extent, cmap='PRGn', vmin=-vmax, vmax=vmax)
+    plt.colorbar(im0, ax=ax0, shrink=1)
+    ax0.set_title(f'Source Calculated at {freq_array[this_nfrequency]:.1f} Hz')
+    ax0.set_xlabel('x position (km)')
+    ax0.set_ylabel('Depth (km)')
+
+    ax1.plot(source_injected_freq_array, np.real(source_injected), label='Injected')
+    ax1.plot(freq_array, np.real(source_term)[idx_domain_ROI][:, pos_injection[0], pos_injection[1]], '--', label='Calculated')
+    ax1.plot(freq_array, np.real(source_analytical), '.', label='Analytical')
+    ax1.set_xlabel('Frequency (Hz)')
+    ax1.set_ylabel('Amplitude')
+    ax1.set_title(f'Source Comparison at $(x, z) = ({pos_injection[0]*model.spacing[0]:.0f}, {pos_injection[1]*model.spacing[1]:.0f})$ m')
+    ax1.set_xlim(0, 50)
+    ax1.grid()
+    ax1.legend()
+    fig.tight_layout()
