@@ -98,7 +98,7 @@ def helmholtz_1D_pml_solution(domain, frequency, velocity, source, alpha):
             col.append(i-1)
 
         else:
-            print('no')
+            print(f'The {k} point is not in the domain points') # for debugging
             data.append(1)
             row.append(k)
             col.append(k)
@@ -137,10 +137,13 @@ if __name__ == "__main__":
     velocity = 1.5
 
     velocity_array = velocity * np.ones(nx)
+    velocity_array[ nx//2 : ] = 3
 
     alpha = 4
 
-    source = lambda x: 1e3 * np.exp(-((x - 0)**2) / (2 * 0.01**2))*np.exp(1j*np.pi/6)
+    source = lambda x: 1 * np.exp(-((x - (-0.2))**2) / (2 * 0.001**2))*np.exp(1j*np.pi/6)
+
+    u_max = np.abs(np.trapezoid(source(x_array), x_array)*(1/(2*2*np.pi*frequency/velocity)))
 
     domain = dataclass(type('Domain', (), {
         'nx': nx,
@@ -155,8 +158,8 @@ if __name__ == "__main__":
     u, b = helmholtz_1D_pml_solution(domain, frequency, velocity_array, source, alpha)
 
     plt.figure(figsize=(10, 6))
-    plt.plot(x_array, np.real(u), label='Real part of u', color='red')
-    plt.plot(x_array, np.imag(u), label='Imaginary part of u', color='blue')
+    plt.plot(x_array, np.real(u)/u_max, label='Real part of u', color='blue')
+    plt.plot(x_array, np.imag(u)/u_max, label='Imaginary part of u', color='red')
     plt.legend()
     plt.title('Solution u')
     plt.xlabel('x')
@@ -164,12 +167,22 @@ if __name__ == "__main__":
     plt.grid()
 
     plt.figure(figsize=(10, 6))
-    plt.plot(x_array, np.real(b), label='Real part of the source', color='red')
-    plt.plot(x_array, np.imag(b), label='Imaginary part of the source', color='blue')
+    plt.plot(x_array, np.real(b), label='Real part of the source', color='blue')
+    plt.plot(x_array, np.imag(b), label='Imaginary part of the source', color='red')
     plt.legend()
     plt.title('Source')
     plt.xlabel('x')
     plt.ylabel('b')
     plt.grid()
 
+    amplitude_u = np.abs(u)
+    plt.figure(figsize=(10, 6))
+    plt.plot(x_array, amplitude_u/u_max, label='Amplitude of u', color='green')
+    plt.legend()
+    plt.title('Amplitude of u')
+    plt.xlabel('x')
+    plt.ylabel('|u|')
+    plt.grid()
+
     plt.show()
+# %%
