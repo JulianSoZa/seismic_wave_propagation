@@ -169,7 +169,7 @@ if __name__ == "__main__":
     domain.pml_domain(100)
     
     # Define source
-    source = sources.GaussianSource(amplitude=1, x_pos=0, y_pos=0.4, sigma=0.05, phase=0)
+    source = sources.GaussianSource(amplitude=1, x_pos=0, y_pos=0.4, sigma=0.01, phase=0)
 
     # Define parameters
     frequency = 10
@@ -179,11 +179,12 @@ if __name__ == "__main__":
     velocity_array[:, :(domain.ny-1)//2] = velocity*2
 
     alpha = 1.4
-
-    # Solve
+    #%% Solve
     u, b = helmholtz_pml_solution(domain, frequency, velocity_array, source, alpha)
 
-#%% Plotting
+    #%% Plotting
     plotting.plot_solution(domain, np.array([frequency]), 0, u[..., np.newaxis], b[..., np.newaxis])
     plotting.plot_velocity(domain, velocity_array)
+    plotting.plot_main_solution(domain, np.array([frequency]), 0, u[..., np.newaxis], b[..., np.newaxis])
+    plotting.plot_pml_coefficients(domain, frequency, alpha)
     plt.show()
